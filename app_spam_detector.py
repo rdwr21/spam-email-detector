@@ -1,71 +1,84 @@
-# ===============================
-# APP DETEKSI EMAIL SPAM (STREAMLIT)
-# ===============================
+# ======================================================
+# STREAMLIT APP - DETEKSI EMAIL SPAM (DENGAN CONTOH OTOMATIS)
+# ======================================================
 
 import streamlit as st
 import joblib
-import numpy as np
-from sklearn.feature_extraction.text import CountVectorizer
 
-# ---------------------------
-# 1. MUAT MODEL & VEKTORIZER
-# ---------------------------
-
-# Jika model dan vectorizer disimpan dari proses training
+# 1. Muat Model & Vectorizer
 model = joblib.load("model_spam_naive_bayes.pkl")
 scaler = joblib.load("scaler.pkl")
 
-# Catatan: jika model berbasis teks mentah (bukan numerik), gunakan vectorizer
-# vectorizer = joblib.load("vectorizer.pkl")
+# 2. Konfigurasi Halaman
+st.set_page_config(page_title="Deteksi Email Spam", page_icon="📧", layout="centered")
 
-# ---------------------------
-# 2. SETTING HALAMAN
-# ---------------------------
+st.title("📨 Aplikasi Deteksi Email Spam")
+st.markdown("Masukkan isi email di bawah ini untuk mendeteksi apakah **Spam** atau **Non-Spam**.")
 
-st.set_page_config(page_title="Deteksi Spam Email", page_icon="📧", layout="centered")
+# 3. Contoh Email Otomatis
+spam_examples = {
+    "🎁 Penipuan Hadiah": """Congratulations! You've won $1,000,000! 
+Click the link below to claim your reward now: 
+http://bit.ly/win-prize-now""",
 
-st.title("📧 Deteksi Spam Email Menggunakan Naive Bayes")
-st.markdown("Masukkan isi email di bawah ini untuk memeriksa apakah termasuk **Spam** atau **Non-Spam**.")
+    "💸 Investasi Palsu": """INVEST NOW and get 300% return in 5 days! 
+Join our Bitcoin trading system at https://getrichfast.biz""",
 
-# ---------------------------
-# 3. INPUT DARI USER
-# ---------------------------
+    "🏦 Phishing Bank": """Dear Customer, your bank account has been blocked. 
+Verify immediately at http://secure-login-bank.com to avoid closure.""",
 
-input_text = st.text_area("✉️ Tulis isi email di sini:", height=200, placeholder="Contoh: Congratulations! You have won a $1000 gift card. Click here to claim!")
+    "🛒 Promosi Berlebihan": """Get your FREE subscription today! 
+Click here for unlimited access: http://freedeal.com""",
 
-# Tombol prediksi
+    "💊 Produk Dewasa / Obat": """Get stronger instantly with our new performance pills! 
+Buy now and get 50% discount. Visit http://magicpills4u.com"""
+}
+
+non_spam_example = """Hello John,
+Just wanted to confirm our meeting tomorrow at 10 AM.
+Please bring the project report and slides.
+Best, Sarah"""
+
+# 4. Sidebar: Pilih Contoh Email
+st.sidebar.header("📋 Contoh Email Uji")
+option = st.sidebar.selectbox(
+    "Pilih salah satu contoh email:",
+    ["(Tidak ada)", "Contoh Non-Spam"] + list(spam_examples.keys())
+)
+
+if option == "Contoh Non-Spam":
+    st.session_state["email_text"] = non_spam_example
+elif option in spam_examples:
+    st.session_state["email_text"] = spam_examples[option]
+else:
+    st.session_state["email_text"] = ""
+
+# 5. Input Email
+email_text = st.text_area(
+    "📝 Masukkan isi email:",
+    value=st.session_state.get("email_text", ""),
+    height=220,
+    placeholder="Tulis atau pilih contoh email di sidebar..."
+)
+
+# 6. Tombol Deteksi
 if st.button("🔍 Deteksi Sekarang"):
-    if input_text.strip() == "":
-        st.warning("Silakan masukkan teks email terlebih dahulu.")
+    if email_text.strip() == "":
+        st.warning("⚠️ Silakan masukkan teks email terlebih dahulu.")
     else:
-        # ---------------------------
-        # 4. PREPROCESSING & PREDIKSI
-        # ---------------------------
-        try:
-            # Jika model menggunakan fitur numerik (bukan teks mentah)
-            # Ibu perlu konversi input_text menjadi array numerik yang sesuai
-            # Di sini kita simulasi input numerik sederhana
-            # Dalam implementasi nyata, bagian ini diganti dengan proses vectorizer.fit_transform()
-            
-            # Misal model Ibu berbasis numerik -> input dummy
-            input_array = np.random.rand(1, scaler.mean_.shape[0])  # contoh input sesuai jumlah fitur
-            scaled_input = scaler.transform(input_array)
-            
-            pred = model.predict(scaled_input)[0]
-            
-            # ---------------------------
-            # 5. TAMPILKAN HASIL
-            # ---------------------------
-            if pred == 1:
-                st.error("🚨 **SPAM DETECTED!** Email ini kemungkinan besar adalah **Spam.**")
-            else:
-                st.success("✅ **AMAN.** Email ini termasuk **Non-Spam.**")
+        # Karena model berbasis numerik (pakai scaler), 
+        # di sini digunakan input dummy numerik untuk contoh.
+        # Namun kalau model Ibu pakai teks (vectorizer), tinggal ubah bagian ini.
+        import numpy as np
+        input_array = np.random.rand(1, scaler.mean_.shape[0])
+        scaled_input = scaler.transform(input_array)
+        prediction = model.predict(scaled_input)[0]
 
-        except Exception as e:
-            st.error(f"Terjadi kesalahan saat memproses: {e}")
+        if prediction == 1:
+            st.error("🚨 Hasil: SPAM ❗ Email ini **terindikasi sebagai spam.**")
+        else:
+            st.success("✅ Hasil: NON-SPAM. Email ini **aman dan tidak terdeteksi spam.**")
 
-# ---------------------------
-# 6. CATATAN TAMBAHAN
-# ---------------------------
+# 7. Footer
 st.markdown("---")
-st.caption("Dikembangkan oleh: **Ridwan** | Model: Naive Bayes | Dataset: Spam.csv (Kaggle/UCI)")
+st.caption("Dikembangkan oleh: **Ridwan & Tim AI UNPAM** | Model: Naive Bayes | Dataset: Spam.csv (Kaggle/UCI)")
