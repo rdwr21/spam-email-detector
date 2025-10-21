@@ -32,7 +32,7 @@ if st.button("🔍 Deteksi Sekarang"):
     input_data[0, 52] = word_freq_money        # kolom ke-53 = word_freq_money
     input_data[0, 50] = word_freq_receive      # kolom ke-51 = word_freq_receive
     input_data[0, 55] = capital_run_length_average
-    input_data[0, 57] = capital_run_length_total
+    input_data[0, 56] = capital_run_length_total
 
     input_scaled = scaler.transform(input_data)
     prediction = model.predict(input_scaled)[0]
@@ -47,3 +47,4 @@ if st.button("🔍 Deteksi Sekarang"):
 
 # 6. Footer
 st.caption("Dikembangkan oleh: **Ridwan & Tim AI 05TPLE007** | Model: Naive Bayes | Dataset: UCI Spambase")
+
