@@ -1,18 +1,18 @@
 # ======================================================
-# STREAMLIT APP - DETEKSI EMAIL SPAM (DENGAN CONTOH OTOMATIS)
+# STREAMLIT APP - DETEKSI EMAIL SPAM BERBASIS TEKS ASLI
 # ======================================================
 
 import streamlit as st
 import joblib
 
 # 1. Muat Model & Vectorizer
-model = joblib.load("model_spam_naive_bayes.pkl")
-scaler = joblib.load("scaler.pkl")
+model = joblib.load("model_spam_nb_text.pkl")
+vectorizer = joblib.load("vectorizer.pkl")
 
 # 2. Konfigurasi Halaman
 st.set_page_config(page_title="Deteksi Email Spam", page_icon="📧", layout="centered")
 
-st.title("📨 Aplikasi Deteksi Email Spam")
+st.title("📨 Aplikasi Deteksi Email Spam (Versi Teks Asli)")
 st.markdown("Masukkan isi email di bawah ini untuk mendeteksi apakah **Spam** atau **Non-Spam**.")
 
 # 3. Contoh Email Otomatis
@@ -66,14 +66,11 @@ if st.button("🔍 Deteksi Sekarang"):
     if email_text.strip() == "":
         st.warning("⚠️ Silakan masukkan teks email terlebih dahulu.")
     else:
-        # Karena model berbasis numerik (pakai scaler), 
-        # di sini digunakan input dummy numerik untuk contoh.
-        # Namun kalau model Ibu pakai teks (vectorizer), tinggal ubah bagian ini.
-        import numpy as np
-        input_array = np.random.rand(1, scaler.mean_.shape[0])
-        scaled_input = scaler.transform(input_array)
-        prediction = model.predict(scaled_input)[0]
+        # Ubah teks ke bentuk vektor numerik
+        email_vector = vectorizer.transform([email_text])
+        prediction = model.predict(email_vector)[0]
 
+        # Tampilkan hasil
         if prediction == 1:
             st.error("🚨 Hasil: SPAM ❗ Email ini **terindikasi sebagai spam.**")
         else:
@@ -81,4 +78,4 @@ if st.button("🔍 Deteksi Sekarang"):
 
 # 7. Footer
 st.markdown("---")
-st.caption("Dikembangkan oleh: **Ridwan & Tim AI UNPAM** | Model: Naive Bayes | Dataset: Spam.csv (Kaggle/UCI)")
+st.caption("Dikembangkan oleh: **Ridwan** | Model: Multinomial Naive Bayes | Dataset: Spam.csv (Kaggle/UCI)")
