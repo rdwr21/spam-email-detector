@@ -1,81 +1,49 @@
 # ======================================================
-# STREAMLIT APP - DETEKSI EMAIL SPAM BERBASIS TEKS ASLI
+# STREAMLIT APP - DETEKSI SPAM (DATA NUMERIK UCI SPAMBASE)
 # ======================================================
 
 import streamlit as st
+import numpy as np
 import joblib
 
-# 1. Muat Model & Vectorizer
-model = joblib.load("model_spam_nb_text.pkl")
-vectorizer = joblib.load("vectorizer.pkl")
+# 1. Muat Model & Scaler
+model = joblib.load("model_spam_naive_bayes.pkl")
+scaler = joblib.load("scaler.pkl")
 
 # 2. Konfigurasi Halaman
-st.set_page_config(page_title="Deteksi Email Spam", page_icon="📧", layout="centered")
+st.set_page_config(page_title="Deteksi Spam Email", page_icon="📊", layout="centered")
+st.title("📊 Aplikasi Deteksi Spam (Dataset Numerik UCI)")
+st.markdown("Masukkan nilai fitur di bawah ini untuk memprediksi apakah email termasuk **Spam** atau **Non-Spam**.")
 
-st.title("📨 Aplikasi Deteksi Email Spam (Versi Teks Asli)")
-st.markdown("Masukkan isi email di bawah ini untuk mendeteksi apakah **Spam** atau **Non-Spam**.")
+# 3. Input Fitur
+st.subheader("🧩 Masukkan Nilai Fitur Penting:")
 
-# 3. Contoh Email Otomatis
-spam_examples = {
-    "🎁 Penipuan Hadiah": """Congratulations! You've won $1,000,000! 
-Click the link below to claim your reward now: 
-http://bit.ly/win-prize-now""",
+# Beberapa fitur utama dari dataset (bisa dikembangkan lagi)
+word_freq_free = st.number_input("Frekuensi kata 'free' (word_freq_free):", min_value=0.0, max_value=10.0, value=0.5, step=0.1)
+word_freq_money = st.number_input("Frekuensi kata 'money' (word_freq_money):", min_value=0.0, max_value=10.0, value=0.2, step=0.1)
+word_freq_receive = st.number_input("Frekuensi kata 'receive' (word_freq_receive):", min_value=0.0, max_value=10.0, value=0.3, step=0.1)
+capital_run_length_average = st.number_input("Rata-rata huruf kapital (capital_run_length_average):", min_value=0.0, max_value=10.0, value=2.0, step=0.1)
+capital_run_length_total = st.number_input("Total huruf kapital (capital_run_length_total):", min_value=0.0, max_value=5000.0, value=100.0, step=10.0)
 
-    "💸 Investasi Palsu": """INVEST NOW and get 300% return in 5 days! 
-Join our Bitcoin trading system at https://getrichfast.biz""",
-
-    "🏦 Phishing Bank": """Dear Customer, your bank account has been blocked. 
-Verify immediately at http://secure-login-bank.com to avoid closure.""",
-
-    "🛒 Promosi Berlebihan": """Get your FREE subscription today! 
-Click here for unlimited access: http://freedeal.com""",
-
-    "💊 Produk Dewasa / Obat": """Get stronger instantly with our new performance pills! 
-Buy now and get 50% discount. Visit http://magicpills4u.com"""
-}
-
-non_spam_example = """Hello John,
-Just wanted to confirm our meeting tomorrow at 10 AM.
-Please bring the project report and slides.
-Best, Sarah"""
-
-# 4. Sidebar: Pilih Contoh Email
-st.sidebar.header("📋 Contoh Email Uji")
-option = st.sidebar.selectbox(
-    "Pilih salah satu contoh email:",
-    ["(Tidak ada)", "Contoh Non-Spam"] + list(spam_examples.keys())
-)
-
-if option == "Contoh Non-Spam":
-    st.session_state["email_text"] = non_spam_example
-elif option in spam_examples:
-    st.session_state["email_text"] = spam_examples[option]
-else:
-    st.session_state["email_text"] = ""
-
-# 5. Input Email
-email_text = st.text_area(
-    "📝 Masukkan isi email:",
-    value=st.session_state.get("email_text", ""),
-    height=220,
-    placeholder="Tulis atau pilih contoh email di sidebar..."
-)
-
-# 6. Tombol Deteksi
+# 4. Prediksi
 if st.button("🔍 Deteksi Sekarang"):
-    if email_text.strip() == "":
-        st.warning("⚠️ Silakan masukkan teks email terlebih dahulu.")
+    # Susun input ke dalam array sesuai urutan fitur
+    # Untuk kesederhanaan, hanya sebagian fitur dipakai
+    input_data = np.array([[word_freq_free, word_freq_money, word_freq_receive, capital_run_length_average, capital_run_length_total]])
+
+    # Lakukan scaling menggunakan scaler hasil training
+    input_scaled = scaler.transform(input_data)
+
+    # Prediksi dengan model Naive Bayes
+    prediction = model.predict(input_scaled)[0]
+
+    # 5. Tampilkan Hasil
+    st.markdown("---")
+    if prediction == 1:
+        st.error("🚨 **Hasil: SPAM** – Email ini terindikasi sebagai spam.")
     else:
-        # Ubah teks ke bentuk vektor numerik
-        email_vector = vectorizer.transform([email_text])
-        prediction = model.predict(email_vector)[0]
+        st.success("✅ **Hasil: NON-SPAM** – Email ini aman dan tidak terdeteksi sebagai spam.")
+    st.markdown("---")
 
-        # Tampilkan hasil
-        if prediction == 1:
-            st.error("🚨 Hasil: SPAM ❗ Email ini **terindikasi sebagai spam.**")
-        else:
-            st.success("✅ Hasil: NON-SPAM. Email ini **aman dan tidak terdeteksi spam.**")
-
-# 7. Footer
-st.markdown("---")
-st.caption("Dikembangkan oleh: **Ridwan** | Model: Multinomial Naive Bayes | Dataset: Spam.csv (Kaggle/UCI)")
+# 6. Footer
+st.caption("Dikembangkan oleh: **Ridwan** | Model: Naive Bayes | Dataset: UCI Spambase")
